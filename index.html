@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Custom Sauna Install — Cost Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --green: #1D9E75;
+    --green-dark: #0F6E56;
+    --green-light: #E1F5EE;
+    --green-mid: #5DCAA5;
+    --text: #1a1a1a;
+    --text-sec: #555;
+    --text-ter: #888;
+    --bg: #f7f6f2;
+    --surface: #ffffff;
+    --surface2: #f2f1ed;
+    --border: rgba(0,0,0,0.10);
+    --border-med: rgba(0,0,0,0.18);
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--green-dark);
+    color: white;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  }
+  .logo-mark {
+    width: 38px; height: 38px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px; font-weight: 400;
+    letter-spacing: -0.01em;
+  }
+  header p { font-size: 13px; opacity: 0.75; margin-top: 1px; }
+  .header-cost {
+    margin-left: auto;
+    text-align: right;
+  }
+  .header-cost .cost-label { font-size: 11px; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.06em; }
+  .header-cost .cost-val { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  /* ── Layout ── */
+  .layout {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 4rem;
+  }
+
+  /* ── Progress ── */
+  .progress-wrap { margin-bottom: 2rem; }
+  .progress-steps {
+    display: flex; gap: 6px; margin-bottom: 10px;
+  }
+  .ps {
+    flex: 1; height: 5px; border-radius: 3px;
+    background: var(--border);
+    transition: background 0.35s;
+  }
+  .ps.done { background: var(--green); }
+  .ps.active { background: var(--green-mid); }
+  .progress-labels {
+    display: flex; justify-content: space-between;
+    font-size: 11px; color: var(--text-ter);
+  }
+
+  /* ── Step ── */
+  .step { display: none; }
+  .step.active { display: block; animation: fadeIn 0.2s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  .step-header { margin-bottom: 1.75rem; }
+  .step-badge {
+    display: inline-block;
+    background: var(--green-light);
+    color: var(--green-dark);
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.07em; text-transform: uppercase;
+    padding: 3px 10px; border-radius: 20px;
+    margin-bottom: 8px;
+  }
+  .step-header h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px; font-weight: 400;
+    letter-spacing: -0.02em; color: var(--text);
+  }
+  .step-header p { font-size: 14px; color: var(--text-sec); margin-top: 4px; }
+
+  /* ── Section label ── */
+  .sec-label {
+    font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--text-ter);
+    margin: 1.5rem 0 8px;
+  }
+  .sec-label:first-child { margin-top: 0; }
+
+  /* ── Card grid ── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px; margin-bottom: 0.5rem;
+  }
+  .opt-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 10px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, transform 0.1s;
+    text-align: center;
+    user-select: none;
+  }
+  .opt-card:hover { border-color: var(--green-mid); transform: translateY(-1px); }
+  .opt-card.selected {
+    border-color: var(--green);
+    background: var(--green-light);
+    border-width: 2px;
+  }
+  .opt-card .icon { font-size: 26px; margin-bottom: 6px; display: block; }
+  .opt-card .lbl { font-size: 13px; font-weight: 500; color: var(--text); }
+  .opt-card .price { font-size: 12px; color: var(--text-ter); margin-top: 2px; }
+
+  /* ── Form fields ── */
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .field-row.triple { grid-template-columns: 1fr 1fr 1fr; }
+  .field-row.full { grid-template-columns: 1fr; }
+  @media (max-width: 480px) {
+    .field-row, .field-row.triple { grid-template-columns: 1fr; }
+  }
+  .field label {
+    display: block; font-size: 12px; font-weight: 500;
+    color: var(--text-sec); margin-bottom: 5px;
+  }
+  .field input, .field textarea, .field select {
+    width: 100%;
+    border: 1.5px solid var(--border-med);
+    border-radius: var(--radius-sm);
+    padding: 9px 12px;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    background: var(--surface);
+    color: var(--text);
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  .field input:focus, .field textarea:focus, .field select:focus {
+    outline: none;
+    border-color: var(--green);
+    box-shadow: 0 0 0 3px rgba(29,158,117,0.12);
+  }
+  .field textarea { resize: vertical; min-height: 64px; }
+
+  /* ── Dim info boxes ── */
+  .dim-info {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 1rem;
+  }
+  .dim-box {
+    background: var(--surface2);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .dim-box .dlabel { font-size: 13px; color: var(--text-sec); font-weight: 500; }
+  .dim-box .dval { font-size: 13px; font-weight: 600; color: var(--text); }
+
+  /* ── Qty rows ── */
+  .qty-list { display: flex; flex-direction: column; gap: 8px; }
+  .qty-row {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .qty-info .qlabel { font-size: 14px; font-weight: 500; }
+  .qty-info .qprice { font-size: 12px; color: var(--text-ter); margin-top: 1px; }
+  .qty-controls { display: flex; align-items: center; gap: 10px; }
+  .qty-btn {
+    width: 30px; height: 30px; border-radius: 50%;
+    border: 1.5px solid var(--border-med);
+    background: var(--surface2);
+    color: var(--text); font-size: 18px; font-weight: 400;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    line-height: 1; transition: background 0.15s;
+  }
+  .qty-btn:hover { background: var(--green-light); border-color: var(--green); }
+  .qty-val { font-size: 15px; font-weight: 600; min-width: 28px; text-align: center; }
+
+  /* ── Toggle grid ── */
+  .toggle-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  @media (max-width: 400px) { .toggle-grid { grid-template-columns: 1fr; } }
+  .tog {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: space-between;
+    transition: border-color 0.2s, background 0.2s;
+    user-select: none;
+  }
+  .tog:hover { border-color: var(--green-mid); }
+  .tog.selected { border-color: var(--green); background: var(--green-light); border-width: 2px; }
+  .tog .tlabel { font-size: 13px; font-weight: 500; }
+  .tog .tprice { font-size: 12px; color: var(--text-ter); margin-top: 1px; }
+  .tog-check {
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 1.5px solid var(--border-med);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: background 0.2s, border-color 0.2s;
+  }
+  .tog.selected .tog-check { background: var(--green); border-color: var(--green); }
+  .checkmark { color: white; font-size: 11px; display: none; }
+  .tog.selected .checkmark { display: block; }
+
+  /* ── Nav ── */
+  .nav-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 2rem; gap: 10px;
+  }
+  .btn {
+    padding: 11px 24px; border-radius: var(--radius-sm);
+    font-size: 14px; font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    border: 1.5px solid var(--border-med);
+    background: var(--surface);
+    color: var(--text);
+    transition: background 0.15s, transform 0.1s;
+  }
+  .btn:hover { background: var(--surface2); }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary {
+    background: var(--green); border-color: var(--green); color: white;
+  }
+  .btn-primary:hover { background: var(--green-dark); border-color: var(--green-dark); }
+  .btn-print {
+    background: #1a1a1a; border-color: #1a1a1a; color: white;
+  }
+  .btn-print:hover { background: #333; }
+
+  /* ── Summary ── */
+  .summary-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .sum-section { padding: 14px 18px; }
+  .sum-section + .sum-section { border-top: 1px solid var(--border); }
+  .sum-sec-label {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--text-ter); margin-bottom: 8px;
+  }
+  .sum-row {
+    display: flex; justify-content: space-between;
+    font-size: 13px; padding: 3px 0; color: var(--text-sec);
+  }
+  .sum-row.subtotal {
+    font-size: 14px; font-weight: 600; color: var(--text);
+    border-top: 1px solid var(--border); margin-top: 6px; padding-top: 8px;
+  }
+  .sum-footer {
+    background: var(--green-dark); padding: 18px 18px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .sum-footer .fl { color: rgba(255,255,255,0.8); font-size: 13px; }
+  .sum-footer .fv { color: white; font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  /* ── Margin slider ── */
+  .margin-wrap {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 1rem;
+  }
+  .margin-wrap input[type=range] {
+    flex: 1; -webkit-appearance: none; height: 5px;
+    border-radius: 3px; background: var(--border-med); outline: none;
+  }
+  .margin-wrap input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 20px; height: 20px;
+    border-radius: 50%; background: var(--green);
+    cursor: pointer; border: 2px solid white;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  }
+  .margin-wrap input[type=range]::-moz-range-thumb {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: var(--green); cursor: pointer;
+    border: 2px solid white;
+  }
+  .margin-val {
+    font-size: 15px; font-weight: 600;
+    min-width: 42px; text-align: right; color: var(--green-dark);
+  }
+
+  /* ── Print ── */
+  @media print {
+    header { position: static; }
+    .nav-row { display: none; }
+    .step { display: block !important; margin-bottom: 2rem; }
+    .progress-wrap { display: none; }
+    body { background: white; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">🌲</div>
+  <div>
+    <h1>Sauna Cost Calculator</h1>
+    <p>Custom Install · Internal Sales Tool</p>
+  </div>
+  <div class="header-cost">
+    <div class="cost-label">Retail Price</div>
+    <div class="cost-val" id="headerCost">$0</div>
+  </div>
+</header>
+
+<div class="layout">
+  <div class="progress-wrap">
+    <div class="progress-steps" id="progressBar"></div>
+    <div class="progress-labels">
+      <span>Project Info</span><span>Dimensions</span><span>Benches & Door</span><span>Heater & Extras</span><span>Labour & Quote</span>
+    </div>
+  </div>
+
+  <!-- STEP 1: Project Info -->
+  <div id="step1" class="step active">
+    <div class="step-header">
+      <div class="step-badge">Step 1 of 5</div>
+      <h2>Project info</h2>
+      <p>Client and project details for this installation</p>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Salesperson</label><input id="salesperson" placeholder="Your name" /></div>
+      <div class="field"><label>Project name</label><input id="projectName" placeholder="e.g. Riverside Spa" /></div>
+    </div>
+    <div class="field-row full">
+      <div class="field"><label>Project address</label><input id="projectAddress" placeholder="123 Main St, City, Province" /></div>
+    </div>
+    <div class="sec-label">Client</div>
+    <div class="field-row">
+      <div class="field"><label>Client name</label><input id="clientName" placeholder="Full name" /></div>
+      <div class="field"><label>Phone</label><input id="clientPhone" placeholder="(000) 000-0000" /></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Email</label><input id="clientEmail" placeholder="client@email.com" /></div>
+      <div class="field"><label>Billing to (if different)</label><input id="billingTo" placeholder="Company or name" /></div>
+    </div>
+    <div class="field-row full">
+      <div class="field"><label>Notes / comments</label><textarea id="notes" placeholder="Special requirements, access notes, scope details..."></textarea></div>
+    </div>
+    <div class="nav-row"><div></div><button class="btn btn-primary" onclick="goTo(2)">Dimensions →</button></div>
+  </div>
+
+  <!-- STEP 2: Dimensions -->
+  <div id="step2" class="step">
+    <div class="step-header">
+      <div class="step-badge">Step 2 of 5</div>
+      <h2>Sauna dimensions</h2>
+      <p>Enter the room size — wall costs are calculated automatically</p>
+    </div>
+    <div class="sec-label">Room size</div>
+    <div class="field-row triple">
+      <div class="field"><label>Depth (ft)</label><input type="number" id="depth" min="0" step="0.5" placeholder="0" oninput="calcWalls()" /></div>
+      <div class="field"><label>Width (ft)</label><input type="number" id="width" min="0" step="0.5" placeholder="0" oninput="calcWalls()" /></div>
+      <div class="field"><label>Height (ft)</label><input type="number" id="height" min="0" step="0.5" placeholder="0" oninput="calcWalls()" /></div>
+    </div>
+    <div class="dim-info" id="dimInfo">
+      <div class="dim-box"><span class="dlabel">Side walls (×2)</span><span class="dval" id="lbl-sides">0 LF</span></div>
+      <div class="dim-box"><span class="dlabel">Back wall</span><span class="dval" id="lbl-back">0 LF</span></div>
+      <div class="dim-box"><span class="dlabel">Ceiling</span><span class="dval" id="lbl-ceiling">0 LF</span></div>
+      <div class="dim-box"><span class="dlabel">Flooring</span><span class="dval" id="lbl-floor">0 sq/ft</span></div>
+    </div>
+    <div class="sec-label" style="margin-top:1.5rem;">Wood species</div>
+    <div class="card-grid">
+      <div class="opt-card selected" onclick="selectWood(this,'Cedar')"><span class="icon">🌲</span><div class="lbl">Cedar</div><div class="price">$3.75/LF</div></div>
+      <div class="opt-card" onclick="selectWood(this,'Hemlock')"><span class="icon">🌿</span><div class="lbl">Hemlock</div><div class="price">Premium</div></div>
+      <div class="opt-card" onclick="selectWood(this,'Basswood')"><span class="icon">🍃</span><div class="lbl">Basswood</div><div class="price">Premium</div></div>
+      <div class="opt-card" onclick="selectWood(this,'Nordic Spruce')"><span class="icon">❄️</span><div class="lbl">Nordic Spruce</div><div class="price">Premium</div></div>
+    </div>
+    <div class="nav-row"><button class="btn" onclick="goTo(1)">← Back</button><button class="btn btn-primary" onclick="goTo(3)">Benches & Door →</button></div>
+  </div>
+
+  <!-- STEP 3: Benches & Door -->
+  <div id="step3" class="step">
+    <div class="step-header">
+      <div class="step-badge">Step 3 of 5</div>
+      <h2>Benches & door</h2>
+      <p>Configure seating layout and entry type</p>
+    </div>
+    <div class="sec-label">Door type</div>
+    <div class="card-grid" style="grid-template-columns:repeat(auto-fill,minmax(110px,1fr));">
+      <div class="opt-card selected" onclick="selectDoor(this,'A',500)"><span class="icon">🚪</span><div class="lbl">Type A</div><div class="price">$500</div></div>
+      <div class="opt-card" onclick="selectDoor(this,'B',750)"><span class="icon">🚪</span><div class="lbl">Type B</div><div class="price">$750</div></div>
+      <div class="opt-card" onclick="selectDoor(this,'C',1000)"><span class="icon">🚪</span><div class="lbl">Type C</div><div class="price">$1,000</div></div>
+      <div class="opt-card" onclick="selectDoor(this,'Full Glass',35)"><span class="icon">🪟</span><div class="lbl">Full Glass</div><div class="price">$35/sq·ft</div></div>
+    </div>
+    <div class="sec-label" style="margin-top:1.5rem;">Bench configuration (LF = linear feet)</div>
+    <div class="qty-list">
+      <div class="qty-row"><div class="qty-info"><div class="qlabel">Top bench</div><div class="qprice">$60 / LF</div></div><div class="qty-controls"><button class="qty-btn" onclick="adj('topBench',-1)">−</button><span class="qty-val" id="topBench">0</span><button class="qty-btn" onclick="adj('topBench',1)">+</button></div></div>
+      <div class="qty-row"><div class="qty-info"><div class="qlabel">Lower bench</div><div class="qprice">$50 / LF</div></div><div class="qty-controls"><button class="qty-btn" onclick="adj('lowerBench',-1)">−</button><span class="qty-val" id="lowerBench">0</span><button class="qty-btn" onclick="adj('lowerBench',1)">+</button></div></div>
+      <div class="qty-row"><div class="qty-info"><div class="qlabel">Backrest</div><div class="qprice">$35 / LF</div></div><div class="qty-controls"><button class="qty-btn" onclick="adj('backrest',-1)">−</button><span class="qty-val" id="backrest">0</span><button class="qty-btn" onclick="adj('backrest',1)">+</button></div></div>
+      <div class="qty-row"><div class="qty-info"><div class="qlabel">Bench skirt — top</div><div class="qprice">$25 / LF</div></div><div class="qty-controls"><button class="qty-btn" onclick="adj('skirtTop',-1)">−</button><span class="qty-val" id="skirtTop">0</span><button class="qty-btn" onclick="adj('skirtTop',1)">+</button></div></div>
+      <div class="qty-row"><div class="qty-info"><div class="qlabel">Bench skirt — bottom</div><div class="qprice">$25 / LF</div></div><div class="qty-controls"><button class="qty-btn" onclick="adj('skirtBot',-1)">−</button><span class="qty-val" id="skirtBot">0</span><button class="qty-btn" onclick="adj('skirtBot',1)">+</button></div></div>
+      <div class="qty-row"><div class="qty-info"><div class="qlabel">Baseboard</div><div class="qprice">$5 / LF</div></div><div class="qty-controls"><button class="qty-btn" onclick="adj('baseboard',-1)">−</button><span class="qty-val" id="baseboard">0</span><button class="qty-btn" onclick="adj('baseboard',1)">+</button></div></div>
+    </div>
+    <div class="nav-row"><button class="btn" onclick="goTo(2)">← Back</button><button class="btn btn-primary" onclick="goTo(4)">Heater & Extras →</button></div>
+  </div>
+
+  <!-- STEP 4: Heater & Extras -->
+  <div id="step4" class="step">
+    <div class="step-header">
+      <div class="step-badge">Step 4 of 5</div>
+      <h2>Heater & extras</h2>
+      <p>Select heating equipment and optional upgrades</p>
+    </div>
+    <div class="sec-label">Heater type</div>
+    <div class="card-grid" style="grid-template-columns:1fr 1fr;">
+      <div class="opt-card selected" onclick="selectHeater(this,'Residential',500)"><span class="icon">🔥</span><div class="lbl">Residential</div><div class="price">$500</div></div>
+      <div class="opt-card" onclick="selectHeater(this,'Commercial',1000)"><span class="icon">♨️</span><div class="lbl">Commercial</div><div class="price">$1,000</div></div>
+    </div>
+    <div class="sec-label">Heater guard</div>
+    <div class="card-grid">
+      <div class="opt-card selected" onclick="selectGuard(this,'None',0)"><span class="icon">⬜</span><div class="lbl">None</div><div class="price">—</div></div>
+      <div class="opt-card" onclick="selectGuard(this,'Type A',100)"><span class="icon">🛡️</span><div class="lbl">Type A</div><div class="price">$100</div></div>
+      <div class="opt-card" onclick="selectGuard(this,'Type B',250)"><span class="icon">🛡️</span><div class="lbl">Type B</div><div class="price">$250</div></div>
+      <div class="opt-card" onclick="selectGuard(this,'Type C',500)"><span class="icon">🛡️</span><div class="lbl">Type C</div><div class="price">$500</div></div>
+    </div>
+    <div class="sec-label">Emitters & controls</div>
+    <div class="qty-list" style="margin-bottom:1rem;">
+      <div class="qty-row"><div class="qty-info"><div class="qlabel">Emitters w/ housing</div><div class="qprice">$75 / each</div></div><div class="qty-controls"><button class="qty-btn" onclick="adj('emitters',-1)">−</button><span class="qty-val" id="emitters">0</span><button class="qty-btn" onclick="adj('emitters',1)">+</button></div></div>
+      <div class="qty-row"><div class="qty-info"><div class="qlabel">Emitter guard</div><div class="qprice">$20 / each</div></div><div class="qty-controls"><button class="qty-btn" onclick="adj('emitterGuard',-1)">−</button><span class="qty-val" id="emitterGuard">0</span><button class="qty-btn" onclick="adj('emitterGuard',1)">+</button></div></div>
+    </div>
+    <div class="sec-label">Optional add-ons</div>
+    <div class="toggle-grid">
+      <div class="tog" onclick="toggleTog(this,'ssbControl',300)"><div><div class="tlabel">SSB control w/ box</div><div class="tprice">$300</div></div><div class="tog-check"><span class="checkmark">✓</span></div></div>
+      <div class="tog" onclick="toggleTog(this,'strapping',4)"><div><div class="tlabel">Strapping</div><div class="tprice">$4 / piece</div></div><div class="tog-check"><span class="checkmark">✓</span></div></div>
+      <div class="tog" onclick="toggleTog(this,'foil',50)"><div><div class="tlabel">Foil (250 sq/ft roll)</div><div class="tprice">$50 / roll</div></div><div class="tog-check"><span class="checkmark">✓</span></div></div>
+      <div class="tog" onclick="toggleTog(this,'ledInit',325)"><div><div class="tlabel">LED lighting — initial</div><div class="tprice">$325</div></div><div class="tog-check"><span class="checkmark">✓</span></div></div>
+      <div class="tog" onclick="toggleTog(this,'ledAdd',250)"><div><div class="tlabel">LED lighting — additional</div><div class="tprice">$250</div></div><div class="tog-check"><span class="checkmark">✓</span></div></div>
+      <div class="tog" onclick="toggleTog(this,'ceilCove',1000)"><div><div class="tlabel">Ceiling cove</div><div class="tprice">$1,000</div></div><div class="tog-check"><span class="checkmark">✓</span></div></div>
+      <div class="tog" onclick="toggleTog(this,'saltLight',500)"><div><div class="tlabel">Salt bricks w/ lighting</div><div class="tprice">$500 / 4-pack</div></div><div class="tog-check"><span class="checkmark">✓</span></div></div>
+      <div class="tog" onclick="toggleTog(this,'saltNoLight',250)"><div><div class="tlabel">Salt bricks — no light</div><div class="tprice">$250 / 4-pack</div></div><div class="tog-check"><span class="checkmark">✓</span></div></div>
+      <div class="tog" onclick="toggleTog(this,'speakers',125)"><div><div class="tlabel">Marine grade speakers</div><div class="tprice">$125 / each</div></div><div class="tog-check"><span class="checkmark">✓</span></div></div>
+      <div class="tog" onclick="toggleTog(this,'potLights',90)"><div><div class="tlabel">Pot lights (Lotus)</div><div class="tprice">$90 / each</div></div><div class="tog-check"><span class="checkmark">✓</span></div></div>
+    </div>
+    <div class="nav-row"><button class="btn" onclick="goTo(3)">← Back</button><button class="btn btn-primary" onclick="goTo(5)">Labour & Quote →</button></div>
+  </div>
+
+  <!-- STEP 5: Labour & Summary -->
+  <div id="step5" class="step">
+    <div class="step-header">
+      <div class="step-badge">Step 5 of 5</div>
+      <h2>Labour & quote</h2>
+      <p>Set installation details and your margin to generate the retail price</p>
+    </div>
+    <div class="sec-label">Installation</div>
+    <div class="qty-list" style="margin-bottom:1rem;">
+      <div class="qty-row"><div class="qty-info"><div class="qlabel">Labour days</div><div class="qprice">$1,000 / day</div></div><div class="qty-controls"><button class="qty-btn" onclick="adj('labourDays',-1)">−</button><span class="qty-val" id="labourDays">1</span><button class="qty-btn" onclick="adj('labourDays',1)">+</button></div></div>
+      <div class="qty-row"><div class="qty-info"><div class="qlabel">Out-of-area surcharge</div><div class="qprice">$250 / zone</div></div><div class="qty-controls"><button class="qty-btn" onclick="adj('ooaZones',-1)">−</button><span class="qty-val" id="ooaZones">0</span><button class="qty-btn" onclick="adj('ooaZones',1)">+</button></div></div>
+      <div class="qty-row"><div class="qty-info"><div class="qlabel">Overnight stays</div><div class="qprice">$500 / night — 2-man crew</div></div><div class="qty-controls"><button class="qty-btn" onclick="adj('overnight',-1)">−</button><span class="qty-val" id="overnight">0</span><button class="qty-btn" onclick="adj('overnight',1)">+</button></div></div>
+    </div>
+    <div class="toggle-grid" style="margin-bottom:1.5rem;">
+      <div class="tog" id="shopDrawTog" onclick="toggleShopDraw()"><div><div class="tlabel">Shop drawings</div><div class="tprice">$500 (optional)</div></div><div class="tog-check"><span class="checkmark">✓</span></div></div>
+    </div>
+    <div class="sec-label">Margin</div>
+    <div class="margin-wrap">
+      <input type="range" id="marginSlider" min="0" max="80" value="50" step="1" oninput="onMargin(this.value)" />
+      <div class="margin-val" id="marginLabel">50%</div>
+    </div>
+    <div class="sec-label">Quote summary</div>
+    <div class="summary-block">
+      <div class="sum-section" id="sumMaterials"></div>
+      <div class="sum-section" id="sumLabour"></div>
+      <div class="sum-footer">
+        <div class="fl" id="sumRetailLabel">Retail price (50% margin)</div>
+        <div class="fv" id="sumRetailVal">$0</div>
+      </div>
+    </div>
+    <div class="nav-row">
+      <button class="btn" onclick="goTo(4)">← Back</button>
+      <button class="btn btn-print" onclick="window.print()">🖨 Print / Save PDF</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const state = {
+  wood: 'Cedar', doorType: 'A', doorCost: 500,
+  heaterType: 'Residential', heaterCost: 500,
+  guardType: 'None', guardCost: 0,
+  addons: {},
+  topBench: 0, lowerBench: 0, backrest: 0, skirtTop: 0, skirtBot: 0, baseboard: 0,
+  emitters: 0, emitterGuard: 0,
+  labourDays: 1, ooaZones: 0, overnight: 0, shopDraw: false,
+  margin: 50, depth: 0, width: 0, height: 0
+};
+
+const ADDON_COSTS = {
+  ssbControl: 300, strapping: 4, foil: 50, ledInit: 325,
+  ledAdd: 250, ceilCove: 1000, saltLight: 500, saltNoLight: 250,
+  speakers: 125, potLights: 90
+};
+
+function renderProgress(cur) {
+  const bar = document.getElementById('progressBar');
+  bar.innerHTML = '';
+  for (let i = 1; i <= 5; i++) {
+    const d = document.createElement('div');
+    d.className = 'ps' + (i < cur ? ' done' : i === cur ? ' active' : '');
+    bar.appendChild(d);
+  }
+}
+
+function goTo(n) {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById('step' + n).classList.add('active');
+  renderProgress(n);
+  if (n === 5) renderSummary();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function selectWood(el, val) {
+  el.closest('.card-grid').querySelectorAll('.opt-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected'); state.wood = val;
+}
+function selectDoor(el, type, cost) {
+  el.closest('.card-grid').querySelectorAll('.opt-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected'); state.doorType = type; state.doorCost = cost;
+}
+function selectHeater(el, type, cost) {
+  el.closest('.card-grid').querySelectorAll('.opt-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected'); state.heaterType = type; state.heaterCost = cost;
+}
+function selectGuard(el, type, cost) {
+  el.closest('.card-grid').querySelectorAll('.opt-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected'); state.guardType = type; state.guardCost = cost;
+}
+
+function toggleTog(el, key, cost) {
+  el.classList.toggle('selected');
+  if (el.classList.contains('selected')) state.addons[key] = cost;
+  else delete state.addons[key];
+  updateHeader();
+}
+
+function toggleShopDraw() {
+  state.shopDraw = !state.shopDraw;
+  document.getElementById('shopDrawTog').classList.toggle('selected', state.shopDraw);
+  renderSummary();
+}
+
+function adj(key, delta) {
+  const el = document.getElementById(key);
+  let v = parseInt(el.textContent) || 0;
+  v = Math.max(0, v + delta);
+  el.textContent = v;
+  state[key] = v;
+  updateHeader();
+}
+
+function calcWalls() {
+  const d = parseFloat(document.getElementById('depth').value) || 0;
+  const w = parseFloat(document.getElementById('width').value) || 0;
+  const h = parseFloat(document.getElementById('height').value) || 0;
+  state.depth = d; state.width = w; state.height = h;
+  document.getElementById('lbl-sides').textContent = h > 0 ? (d * h * 2).toFixed(1) + ' LF' : '0 LF';
+  document.getElementById('lbl-back').textContent = h > 0 ? (w * h).toFixed(1) + ' LF' : '0 LF';
+  document.getElementById('lbl-ceiling').textContent = (d * w).toFixed(1) + ' LF';
+  document.getElementById('lbl-floor').textContent = (d * w).toFixed(1) + ' sq/ft';
+  updateHeader();
+}
+
+function onMargin(v) {
+  document.getElementById('marginLabel').textContent = v + '%';
+  state.margin = parseInt(v);
+  renderSummary();
+}
+
+function fmt(n) { return '$' + Math.round(n).toLocaleString('en-CA'); }
+
+function calcCosts() {
+  const { depth: d, width: w, height: h } = state;
+  const wallLF = h > 0 ? (d * h * 2 + w * h) : 0;
+  const ceilingLF = d * w;
+  const floorSqFt = d * w;
+  const woodCost = (wallLF + ceilingLF) * 3.75;
+  const floorCost = floorSqFt * 30;
+  const doorCost = state.doorCost;
+  const benches = state.topBench * 60 + state.lowerBench * 50 + state.backrest * 35
+    + state.skirtTop * 25 + state.skirtBot * 25 + state.baseboard * 5;
+  const heaterCost = state.heaterCost;
+  const guardCost = state.guardCost;
+  const emitterCost = state.emitters * 75 + state.emitterGuard * 20;
+  const addonCost = Object.values(state.addons).reduce((a, b) => a + b, 0);
+  const materialTotal = woodCost + floorCost + doorCost + benches + heaterCost + guardCost + emitterCost + addonCost;
+  const labourCost = state.labourDays * 1000;
+  const ooaCost = state.ooaZones * 250;
+  const overnightCost = state.overnight * 500;
+  const shopCost = state.shopDraw ? 500 : 0;
+  const labourTotal = labourCost + ooaCost + overnightCost + shopCost;
+  const subtotal = materialTotal + labourTotal;
+  const m = state.margin / 100;
+  const retail = m < 1 ? subtotal / (1 - m) : subtotal;
+  return { woodCost, floorCost, doorCost, benches, heaterCost, guardCost, emitterCost, addonCost, materialTotal, labourTotal, labourCost, ooaCost, overnightCost, shopCost, subtotal, retail };
+}
+
+function updateHeader() {
+  const c = calcCosts();
+  const m = state.margin / 100;
+  document.getElementById('headerCost').textContent = fmt(m < 1 ? c.subtotal / (1 - m) : c.subtotal);
+}
+
+function renderSummary() {
+  const c = calcCosts();
+  const matRows = [
+    ['Wood, walls & ceiling', c.woodCost],
+    ['Flooring', c.floorCost],
+    ['Door — Type ' + state.doorType, c.doorCost],
+    ['Benches', c.benches],
+    ['Heater — ' + state.heaterType, c.heaterCost],
+    state.guardCost > 0 ? ['Heater guard — ' + state.guardType, c.guardCost] : null,
+    c.emitterCost > 0 ? ['Emitters & guards', c.emitterCost] : null,
+    c.addonCost > 0 ? ['Add-ons', c.addonCost] : null,
+  ].filter(Boolean);
+
+  const labRows = [
+    c.labourCost > 0 ? ['Labour (' + state.labourDays + ' day' + (state.labourDays !== 1 ? 's' : '') + ')', c.labourCost] : null,
+    c.ooaCost > 0 ? ['Out-of-area surcharge', c.ooaCost] : null,
+    c.overnightCost > 0 ? ['Overnight stays', c.overnightCost] : null,
+    c.shopCost > 0 ? ['Shop drawings', c.shopCost] : null,
+  ].filter(Boolean);
+
+  let matHtml = '<div class="sum-sec-label">Materials</div>';
+  matRows.forEach(([l, v]) => { matHtml += `<div class="sum-row"><span>${l}</span><span>${fmt(v)}</span></div>`; });
+  matHtml += `<div class="sum-row subtotal"><span>Material total</span><span>${fmt(c.materialTotal)}</span></div>`;
+  document.getElementById('sumMaterials').innerHTML = matHtml;
+
+  let labHtml = '<div class="sum-sec-label">Labour & Services</div>';
+  if (labRows.length) {
+    labRows.forEach(([l, v]) => { labHtml += `<div class="sum-row"><span>${l}</span><span>${fmt(v)}</span></div>`; });
+  } else {
+    labHtml += '<div class="sum-row" style="color:var(--text-ter)"><span>No labour items added</span><span>—</span></div>';
+  }
+  labHtml += `<div class="sum-row subtotal"><span>Labour total</span><span>${fmt(c.labourTotal)}</span></div>`;
+  labHtml += `<div class="sum-row subtotal" style="margin-top:4px"><span>Total cost</span><span>${fmt(c.subtotal)}</span></div>`;
+  document.getElementById('sumLabour').innerHTML = labHtml;
+
+  document.getElementById('sumRetailLabel').textContent = `Retail price (${state.margin}% margin)`;
+  document.getElementById('sumRetailVal').textContent = fmt(c.retail);
+  updateHeader();
+}
+
+renderProgress(1);
+</script>
+</body>
+</html>
