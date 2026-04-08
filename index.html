@@ -262,7 +262,10 @@ header p { font-size: 12px; opacity: 0.6; margin-top: 1px; }
       <p>Client and project details for this installation</p>
     </div>
     <div class="field-row">
-      <div class="field"><label>Salesperson</label><input id="salesperson" placeholder="Your name" /></div>
+      <div class="field"><label>Salesperson</label><select id="salesperson">
+        <option value="Floriana Di Chiazza">Floriana Di Chiazza</option>
+        <option value="Robert Jones">Robert Jones</option>
+      </select></div>
       <div class="field"><label>Project name</label><input id="projectName" placeholder="e.g. Riverside Spa" /></div>
     </div>
     <div class="field-row full">
@@ -288,19 +291,22 @@ header p { font-size: 12px; opacity: 0.6; margin-top: 1px; }
     <div class="step-header">
       <div class="step-badge">Step 2 of 5</div>
       <h2>Sauna dimensions</h2>
-      <p>Enter the room size — wall costs are calculated automatically</p>
+      <p>Enter the room size in inches — toggle off any walls supplied by others</p>
     </div>
-    <div class="sec-label">Room size</div>
+    <div class="sec-label">Room size (inches)</div>
     <div class="field-row triple">
-      <div class="field"><label>Depth (ft)</label><input type="number" id="depth" min="0" step="0.5" placeholder="0" oninput="calcWalls()" /></div>
-      <div class="field"><label>Width (ft)</label><input type="number" id="width" min="0" step="0.5" placeholder="0" oninput="calcWalls()" /></div>
-      <div class="field"><label>Height (ft)</label><input type="number" id="height" min="0" step="0.5" placeholder="0" oninput="calcWalls()" /></div>
+      <div class="field"><label>Depth (in)</label><input type="number" id="depth" min="0" step="1" placeholder="0" oninput="calcWalls()" /></div>
+      <div class="field"><label>Width (in)</label><input type="number" id="width" min="0" step="1" placeholder="0" oninput="calcWalls()" /></div>
+      <div class="field"><label>Height (in)</label><input type="number" id="height" min="0" step="1" placeholder="0" oninput="calcWalls()" /></div>
     </div>
-    <div class="dim-info">
-      <div class="dim-box"><span class="dlabel">Side walls (×2)</span><span class="dval" id="lbl-sides">0 LF</span></div>
-      <div class="dim-box"><span class="dlabel">Back wall</span><span class="dval" id="lbl-back">0 LF</span></div>
-      <div class="dim-box"><span class="dlabel">Ceiling</span><span class="dval" id="lbl-ceiling">0 LF</span></div>
-      <div class="dim-box"><span class="dlabel">Flooring</span><span class="dval" id="lbl-floor">0 sq/ft</span></div>
+    <div class="sec-label" style="margin-top:1.25rem;">Walls included <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-ter);font-size:11px;">— toggle off walls supplied by others</span></div>
+    <div class="toggle-grid" style="margin-bottom:0.5rem;">
+      <div class="tog selected" id="tog-leftWall"  onclick="toggleWall('leftWall',this)"><div><div class="tlabel">Left side wall</div><div class="tprice" id="lbl-left">0 LF</div></div><div class="tog-check"><span class="checkmark">✓</span></div></div>
+      <div class="tog selected" id="tog-rightWall" onclick="toggleWall('rightWall',this)"><div><div class="tlabel">Right side wall</div><div class="tprice" id="lbl-right">0 LF</div></div><div class="tog-check"><span class="checkmark">✓</span></div></div>
+      <div class="tog selected" id="tog-backWall"  onclick="toggleWall('backWall',this)"><div><div class="tlabel">Back wall</div><div class="tprice" id="lbl-back">0 LF</div></div><div class="tog-check"><span class="checkmark">✓</span></div></div>
+      <div class="tog selected" id="tog-frontWall" onclick="toggleWall('frontWall',this)"><div><div class="tlabel">Front wall</div><div class="tprice" id="lbl-front">0 LF</div></div><div class="tog-check"><span class="checkmark">✓</span></div></div>
+      <div class="tog selected" id="tog-ceiling"   onclick="toggleWall('ceiling',this)"><div><div class="tlabel">Ceiling</div><div class="tprice" id="lbl-ceiling">0 LF</div></div><div class="tog-check"><span class="checkmark">✓</span></div></div>
+      <div class="tog selected" id="tog-floor"     onclick="toggleWall('floor',this)"><div><div class="tlabel">Flooring</div><div class="tprice" id="lbl-floor">0 sq/ft</div></div><div class="tog-check"><span class="checkmark">✓</span></div></div>
     </div>
     <div class="sec-label" style="margin-top:1.5rem;">Wood species</div>
     <div class="card-grid">
@@ -326,14 +332,62 @@ header p { font-size: 12px; opacity: 0.6; margin-top: 1px; }
       <div class="opt-card" onclick="selectDoor(this,'Type C',1000)"><span class="icon">🚪</span><div class="lbl">Type C</div><div class="price">$1,000</div></div>
       <div class="opt-card" onclick="selectDoor(this,'Full Glass Front',35)"><span class="icon">🪟</span><div class="lbl">Full Glass</div><div class="price">$35/sq·ft</div></div>
     </div>
-    <div class="sec-label" style="margin-top:1.5rem;">Bench configuration (LF = linear feet)</div>
+    <div class="sec-label" style="margin-top:1.5rem;">Bench configuration</div>
+
+    <!-- bench card styles injected inline -->
+    <style>
+    .bench-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 8px; }
+    .bench-card-title { font-size: 13px; font-weight: 600; margin-bottom: 10px; color: var(--text); }
+    .bench-fields { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; align-items: end; }
+    @media(max-width:480px){ .bench-fields { grid-template-columns: 1fr 1fr; } }
+    .bench-field label { display: block; font-size: 11px; font-weight: 500; color: var(--text-ter); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .bench-field input, .bench-field select { width: 100%; border: 1.5px solid var(--border-med); border-radius: 6px; padding: 7px 10px; font-size: 14px; font-family: 'DM Sans', sans-serif; background: var(--surface); color: var(--text); }
+    .bench-field input:focus, .bench-field select:focus { outline: none; border-color: var(--green); }
+    .bench-cost { font-size: 13px; font-weight: 600; color: var(--green-dark); margin-top: 10px; text-align: right; }
+    </style>
+
+    <!-- Top bench -->
+    <div class="bench-card">
+      <div class="bench-card-title">Top bench</div>
+      <div class="bench-fields">
+        <div class="bench-field"><label>Length (LF)</label><input type="number" id="topBenchLen" min="0" step="0.5" placeholder="0" oninput="calcBench('top')" /></div>
+        <div class="bench-field"><label>Depth</label>
+          <select id="topBenchDepth" onchange="calcBench('top')">
+            <option value="80">30" — $80/LF</option>
+            <option value="70">24" — $70/LF</option>
+            <option value="60" selected>20" — $60/LF</option>
+            <option value="50">15.5" — $50/LF</option>
+          </select>
+        </div>
+        <div class="bench-field"><label>Rate</label><input type="text" id="topBenchRate" readonly placeholder="—" style="background:var(--surface2);color:var(--text-sec);" /></div>
+      </div>
+      <div class="bench-cost" id="topBenchCost">$0</div>
+    </div>
+
+    <!-- Lower bench -->
+    <div class="bench-card">
+      <div class="bench-card-title">Lower bench</div>
+      <div class="bench-fields">
+        <div class="bench-field"><label>Length (LF)</label><input type="number" id="lowerBenchLen" min="0" step="0.5" placeholder="0" oninput="calcBench('lower')" /></div>
+        <div class="bench-field"><label>Depth</label>
+          <select id="lowerBenchDepth" onchange="calcBench('lower')">
+            <option value="80">30" — $80/LF</option>
+            <option value="70">24" — $70/LF</option>
+            <option value="60" selected>20" — $60/LF</option>
+            <option value="50">15.5" — $50/LF</option>
+          </select>
+        </div>
+        <div class="bench-field"><label>Rate</label><input type="text" id="lowerBenchRate" readonly placeholder="—" style="background:var(--surface2);color:var(--text-sec);" /></div>
+      </div>
+      <div class="bench-cost" id="lowerBenchCost">$0</div>
+    </div>
+
+    <div class="sec-label" style="margin-top:1rem;">Extras (flat rate per LF)</div>
     <div class="qty-list">
-      <div class="qty-row"><div class="qty-info"><div class="qlabel">Top bench</div><div class="qprice">$60 / LF</div></div><div class="qty-controls"><button class="qty-btn" onclick="adj('topBench',-1)">−</button><span class="qty-val" id="topBench">0</span><button class="qty-btn" onclick="adj('topBench',1)">+</button></div></div>
-      <div class="qty-row"><div class="qty-info"><div class="qlabel">Lower bench</div><div class="qprice">$50 / LF</div></div><div class="qty-controls"><button class="qty-btn" onclick="adj('lowerBench',-1)">−</button><span class="qty-val" id="lowerBench">0</span><button class="qty-btn" onclick="adj('lowerBench',1)">+</button></div></div>
-      <div class="qty-row"><div class="qty-info"><div class="qlabel">Backrest</div><div class="qprice">$35 / LF</div></div><div class="qty-controls"><button class="qty-btn" onclick="adj('backrest',-1)">−</button><span class="qty-val" id="backrest">0</span><button class="qty-btn" onclick="adj('backrest',1)">+</button></div></div>
-      <div class="qty-row"><div class="qty-info"><div class="qlabel">Bench skirt — top</div><div class="qprice">$25 / LF</div></div><div class="qty-controls"><button class="qty-btn" onclick="adj('skirtTop',-1)">−</button><span class="qty-val" id="skirtTop">0</span><button class="qty-btn" onclick="adj('skirtTop',1)">+</button></div></div>
-      <div class="qty-row"><div class="qty-info"><div class="qlabel">Bench skirt — bottom</div><div class="qprice">$25 / LF</div></div><div class="qty-controls"><button class="qty-btn" onclick="adj('skirtBot',-1)">−</button><span class="qty-val" id="skirtBot">0</span><button class="qty-btn" onclick="adj('skirtBot',1)">+</button></div></div>
-      <div class="qty-row"><div class="qty-info"><div class="qlabel">Baseboard</div><div class="qprice">$5 / LF</div></div><div class="qty-controls"><button class="qty-btn" onclick="adj('baseboard',-1)">−</button><span class="qty-val" id="baseboard">0</span><button class="qty-btn" onclick="adj('baseboard',1)">+</button></div></div>
+      <div class="qty-row"><div class="qty-info"><div class="qlabel">Backrest</div><div class="qprice">$35 / LF</div></div><div class="qty-controls"><button class="qty-btn" onclick="adjLF('backrest',-1)">−</button><span class="qty-val" id="backrest">0</span><button class="qty-btn" onclick="adjLF('backrest',1)">+</button></div></div>
+      <div class="qty-row"><div class="qty-info"><div class="qlabel">Bench skirt — top</div><div class="qprice">$25 / LF</div></div><div class="qty-controls"><button class="qty-btn" onclick="adjLF('skirtTop',-1)">−</button><span class="qty-val" id="skirtTop">0</span><button class="qty-btn" onclick="adjLF('skirtTop',1)">+</button></div></div>
+      <div class="qty-row"><div class="qty-info"><div class="qlabel">Bench skirt — bottom</div><div class="qprice">$25 / LF</div></div><div class="qty-controls"><button class="qty-btn" onclick="adjLF('skirtBot',-1)">−</button><span class="qty-val" id="skirtBot">0</span><button class="qty-btn" onclick="adjLF('skirtBot',1)">+</button></div></div>
+      <div class="qty-row"><div class="qty-info"><div class="qlabel">Baseboard</div><div class="qprice">$5 / LF</div></div><div class="qty-controls"><button class="qty-btn" onclick="adjLF('baseboard',-1)">−</button><span class="qty-val" id="baseboard">0</span><button class="qty-btn" onclick="adjLF('baseboard',1)">+</button></div></div>
     </div>
     <div class="nav-row"><button class="btn" onclick="goTo(2)">← Back</button><button class="btn btn-primary" onclick="goTo(4)">Heater & Extras →</button></div>
   </div>
@@ -467,17 +521,55 @@ function selectGuard(el,type,cost){ el.closest('.card-grid').querySelectorAll('.
 function toggleTog(el,key,label,cost){ el.classList.toggle('selected'); if(el.classList.contains('selected')) state.addons[key]={label,cost}; else delete state.addons[key]; updateHeader(); }
 function toggleShopDraw(){ state.shopDraw=!state.shopDraw; document.getElementById('shopDrawTog').classList.toggle('selected',state.shopDraw); renderSummary(); }
 
-function adj(key,delta){ const el=document.getElementById(key); let v=parseInt(el.textContent)||0; v=Math.max(0,v+delta); el.textContent=v; state[key]=v; updateHeader(); }
+// bench state
+const benchState = {
+  top:   { len:0, depth:20, rate:60, cost:0 },
+  lower: { len:0, depth:20, rate:60, cost:0 }
+};
+
+const depthLabel = { 80:'30"', 70:'24"', 60:'20"', 50:'15.5"' };
+
+function calcBench(which){
+  const b = benchState[which];
+  const len = parseFloat(document.getElementById(which+'BenchLen').value)||0;
+  const rate = parseInt(document.getElementById(which+'BenchDepth').value)||60;
+  const depth = depthLabel[rate]||'20"';
+  b.len=len; b.rate=rate; b.depth=depth; b.cost=len*rate;
+  document.getElementById(which+'BenchRate').value='$'+rate+'/LF';
+  document.getElementById(which+'BenchCost').textContent='$'+b.cost.toLocaleString('en-CA');
+  updateHeader();
+}
+
+function adjLF(key,delta){ const el=document.getElementById(key); let v=parseInt(el.textContent)||0; v=Math.max(0,v+delta); el.textContent=v; state[key]=v; updateHeader(); }
+function adj(key,delta){ adjLF(key,delta); }
+
+// wall include/exclude state — all on by default
+const wallsOn={ leftWall:true, rightWall:true, backWall:true, frontWall:true, ceiling:true, floor:true };
+
+function toggleWall(key,el){
+  wallsOn[key]=!wallsOn[key];
+  el.classList.toggle('selected', wallsOn[key]);
+  calcWalls();
+}
 
 function calcWalls(){
-  const d=parseFloat(document.getElementById('depth').value)||0;
-  const w=parseFloat(document.getElementById('width').value)||0;
-  const h=parseFloat(document.getElementById('height').value)||0;
-  state.depth=d; state.width=w; state.height=h;
-  document.getElementById('lbl-sides').textContent=h>0?(d*h*2).toFixed(1)+' LF':'0 LF';
-  document.getElementById('lbl-back').textContent=h>0?(w*h).toFixed(1)+' LF':'0 LF';
-  document.getElementById('lbl-ceiling').textContent=(d*w).toFixed(1)+' LF';
-  document.getElementById('lbl-floor').textContent=(d*w).toFixed(1)+' sq/ft';
+  const dIn=parseFloat(document.getElementById('depth').value)||0;
+  const wIn=parseFloat(document.getElementById('width').value)||0;
+  const hIn=parseFloat(document.getElementById('height').value)||0;
+  // store in inches
+  state.depth=dIn; state.width=wIn; state.height=hIn;
+  // convert to LF for display (inches / 12)
+  const dFt=dIn/12, wFt=wIn/12, hFt=hIn/12;
+  const sideArea=(dFt*hFt).toFixed(2);
+  const backArea=(wFt*hFt).toFixed(2);
+  const ceilArea=(dFt*wFt).toFixed(2);
+  const floorArea=(dFt*wFt).toFixed(2);
+  document.getElementById('lbl-left').textContent=hIn>0?sideArea+' LF':'0 LF';
+  document.getElementById('lbl-right').textContent=hIn>0?sideArea+' LF':'0 LF';
+  document.getElementById('lbl-back').textContent=hIn>0?backArea+' LF':'0 LF';
+  document.getElementById('lbl-front').textContent=hIn>0?backArea+' LF':'0 LF';
+  document.getElementById('lbl-ceiling').textContent=ceilArea+' LF';
+  document.getElementById('lbl-floor').textContent=floorArea+' sq/ft';
   updateHeader();
 }
 
@@ -486,13 +578,24 @@ function onMargin(v){ document.getElementById('marginLabel').textContent=v+'%'; 
 function fmt(n){ return '$'+Math.round(n).toLocaleString('en-CA'); }
 
 function calcCosts(){
-  const{depth:d,width:w,height:h}=state;
-  const wallLF=h>0?(d*h*2+w*h):0;
-  const ceilingLF=d*w, floorSqFt=d*w;
-  const woodCost=(wallLF+ceilingLF)*3.75;
-  const floorCost=floorSqFt*30;
+  const dIn=state.depth, wIn=state.width, hIn=state.height;
+  // convert inches to feet for area calculations
+  const dFt=dIn/12, wFt=wIn/12, hFt=hIn/12;
+  const sideLF = hFt>0 ? dFt*hFt : 0;
+  const backFrontLF = hFt>0 ? wFt*hFt : 0;
+  const ceilLF = dFt*wFt;
+  const floorSqFt = dFt*wFt;
+  // only count walls that are toggled on
+  const wallLF =
+    (wallsOn.leftWall  ? sideLF      : 0) +
+    (wallsOn.rightWall ? sideLF      : 0) +
+    (wallsOn.backWall  ? backFrontLF : 0) +
+    (wallsOn.frontWall ? backFrontLF : 0) +
+    (wallsOn.ceiling   ? ceilLF      : 0);
+  const woodCost = wallLF * 3.75;
+  const floorCost = wallsOn.floor ? floorSqFt*30 : 0;
   const doorCost=state.doorCost;
-  const benches=state.topBench*60+state.lowerBench*50+state.backrest*35+state.skirtTop*25+state.skirtBot*25+state.baseboard*5;
+  const benches = benchState.top.cost + benchState.lower.cost + state.backrest*35 + state.skirtTop*25 + state.skirtBot*25 + state.baseboard*5;
   const heaterCost=state.heaterCost;
   const guardCost=state.guardCost;
   const emitterCost=state.emitters*75+state.emitterGuard*20;
@@ -558,6 +661,7 @@ function generateProposal(){
   const projectAddress=gv('projectAddress');
   const projectName=gv('projectName')||projectAddress||'Custom Sauna Installation';
   const salesperson=gv('salesperson')||'Saunacore Team';
+  const salespersonTitle=salesperson==='Robert Jones'?'President':'Executive Sales';
   const quoteNo=gv('quoteNumber')||'Q000';
   const today=new Date().toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric'});
   const retailFmt=fmt(c.retail);
@@ -565,17 +669,24 @@ function generateProposal(){
   const deposit40=fmt(c.retail*0.4);
   const deposit10=fmt(c.retail*0.1);
 
-  // Build scope list from state
   const scopeWall=[];
-  const{depth:d,width:w,height:h}=state;
-  if(d||w||h) scopeWall.push(`Approximate interior dimensions: ${d}' (D) × ${w}' (W) × ${h}' (H)`);
+  const{depth:dIn,width:wIn,height:hIn}=state;
+  if(dIn||wIn||hIn) scopeWall.push(`Approximate interior dimensions: ${dIn}" (D) × ${wIn}" (W) × ${hIn}" (H)`);
   scopeWall.push(`Wall and ceiling construction using 1 × 4 T&G ${state.wood}`);
   scopeWall.push('Clear, A-Grade or better, kiln dried and treated');
   scopeWall.push('Vertical cedar orientation on all wall surfaces');
+  const excluded=[];
+  if(!wallsOn.leftWall) excluded.push('left side wall');
+  if(!wallsOn.rightWall) excluded.push('right side wall');
+  if(!wallsOn.backWall) excluded.push('back wall');
+  if(!wallsOn.frontWall) excluded.push('front wall');
+  if(!wallsOn.ceiling) excluded.push('ceiling');
+  if(!wallsOn.floor) excluded.push('flooring');
+  if(excluded.length) scopeWall.push(`Excluded (by others): ${excluded.join(', ')}`);
 
   const scopeBench=[];
-  if(state.topBench>0) scopeBench.push(`Top bench: ${state.topBench} LF at 36" height`);
-  if(state.lowerBench>0) scopeBench.push(`Lower bench: ${state.lowerBench} LF at 18" height`);
+  if(benchState.top.len>0) scopeBench.push(`Top bench: ${benchState.top.len} LF × ${benchState.top.depth} depth ($${benchState.top.rate}/LF)`);
+  if(benchState.lower.len>0) scopeBench.push(`Lower bench: ${benchState.lower.len} LF × ${benchState.lower.depth} depth ($${benchState.lower.rate}/LF)`);
   if(state.backrest>0) scopeBench.push(`Backrest: ${state.backrest} LF`);
   if(state.skirtTop>0||state.skirtBot>0) scopeBench.push(`Bench skirting: ${state.skirtTop+state.skirtBot} LF total`);
   if(state.baseboard>0) scopeBench.push(`Baseboard: ${state.baseboard} LF`);
@@ -638,7 +749,7 @@ function generateProposal(){
         <div class="letter-sign">
           <p>Regards,</p>
           <p class="sig-name">${salesperson}</p>
-          <p class="sig-title">Executive Sales</p>
+          <p class="sig-title">${salespersonTitle}</p>
         </div>
       </div>
       <div class="letter-footer">8841A George Bolton Parkway, Unit 1 &nbsp;|&nbsp; Bolton, ON L7E 2X8 &nbsp;|&nbsp; 905.857.8085 &nbsp;|&nbsp; www.saunacore.com</div>
